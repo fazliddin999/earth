@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Interactive Cursor Dragon</title>
+    <style>
+      body {
+        margin: 0;
+        background: black;
+        overflow: hidden;
+      }
+
+      svg {
+        width: 100vw;
+        height: 100vh;
+        display: block;
+      }
+
+      .dragon-head {
+        fill: yellow;
+      }
+
+      .dragon-fins {
+        fill: lime;
+        opacity: 0.6;
+      }
+
+      .dragon-stretched {
+        fill: violet;
+        opacity: 0.8;
+      }
+
+      .dragon-collapsed {
+        fill: white;
+        opacity: 0.4;
+      }
+    </style>
+  </head>
+  <body>
+    <svg>
+      <defs>
+        <circle id="dragon-part" r="12" cx="0" cy="0"></circle>
+      </defs>
+      <g id="dragon"></g>
+    </svg>
+
+    <script>
+      const dragon = document.getElementById("dragon");
+      const N = 1000; // qancha bo‘lak
+      const elems = [];
+
+      for (let i = 0; i < N; i++) {
+        const use = document.createElementNS(
+          "http://www.w3.org/2000/svg",
+          "use"
+        );
+        use.setAttribute("href", "#dragon-part");
+        dragon.appendChild(use);
+        elems.push({ use, x: 0, y: 0 });
+      }
+
+      let mouseX = window.innerWidth / 2;
+      let mouseY = window.innerHeight / 2;
+
+      window.addEventListener("mousemove", (e) => {
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+      });
+
+      function updateDragonGlow() {
+        let totalDistance = 0;
+
+        // zanjir bo‘lib yurishi uchun
+        elems[0].x += (mouseX - elems[0].x) * 1;
+        elems[0].y += (mouseY - elems[0].y) * 1;
+
+        for (let i = 1; i < N; i++) {
+          elems[i].x += (elems[i - 1].x - elems[i].x) * 0.9;
+          elems[i].y += (elems[i - 1].y - elems[i].y) * 0.9;
+          totalDistance += Math.hypot(
+            elems[i].x - elems[i - 1].x,
+            elems[i].y - elems[i - 1].y
+          );
+        }
+
+        const avgDistance = totalDistance / (N - 1);
+        const isStretched = avgDistance > 25;
+
+        for (let i = 0; i < N; i++) {
+          const elem = elems[i].use;
+          elem.classList.remove(
+            "dragon-stretched",
+            "dragon-collapsed",
+            "dragon-head",
+            "dragon-fins"
+          );
+
+          if (i === 0) {
+            elem.classList.add("dragon-head");
+          } else if (i === 8 || i === 14) {
+            elem.classList.add("dragon-fins");
+          } else {
+            elem.classList.add(
+              isStretched ? "dragon-stretched" : "dragon-collapsed"
+            );
+          }
+
+          elem.setAttribute("x", elems[i].x);
+          elem.setAttribute("y", elems[i].y);
+        }
+
+        requestAnimationFrame(updateDragonGlow);
+      }
+
+      updateDragonGlow();
+    </script>
+  </body>
+</html>
